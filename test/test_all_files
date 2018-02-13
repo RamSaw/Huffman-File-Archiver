@@ -1,0 +1,19 @@
+#!/bin/bash
+num_of_tests=0
+failed=0
+export num_of_tests
+for test in $(find ./test_files/ -type f);
+do
+  echo ""
+  echo ""
+  echo "" 
+  
+  if ! ./test_file $test
+  then
+     ((failed++));
+  fi;
+  ((num_of_tests++))
+done
+echo "---------------RESULT---------------"
+echo "FAILED: $failed, TOTAL NUMBER: $num_of_tests"
+

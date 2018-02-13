@@ -1,0 +1,115 @@
+#!/bin/bash
+filename=$1
+echo -e "\e[01;35m--------------- TEST $filename ---------------\e[0m"
+state=1
+compressed="$filename.mp5"
+uncompressed="$filename.uncompressed"
+
+#COMPRESSING
+cmd_compress="../huffman -c -f $filename -o $compressed"
+
+echo -e "\e[01;34m-----COMPRESSING-----\e[0m";
+output_compressed="$($cmd_compress)"
+echo -e "--output--";
+echo -e "$output_compressed";
+
+i=0
+while read -r line; do
+    out_compressed[$i]=$line
+    ((i++))
+done <<< "$output_compressed"
+
+source_file_size="$(echo "$(wc -c $filename | awk '{print $1}')")"
+if [ "${out_compressed[0]}" -eq "$source_file_size" ]
+then 
+   status="OK statistic output: size of file to compress_mode is real"
+   echo -e "\e[01;36m$status\e[0m";
+else 
+    error="ERROR statistic output: size of file to compress_mode is not real"
+    echo -e "\e[01;31m$error\e[0m";
+    state=0
+fi
+echo "output: ${out_compressed[0]}, real: $source_file_size"
+
+compressed_file_size="$(echo "$(wc -c $compressed | awk '{print $1}')")"
+out_compressed_file_size=$((${out_compressed[1]}+${out_compressed[2]}))
+if [ "$out_compressed_file_size" -eq "$compressed_file_size" ]
+then 
+   status="OK statistic output: size of compressed file is real"
+   echo -e "\e[01;36m$status\e[0m";
+else 
+    error="ERROR statistic output: size of compressed file is not real"
+    echo -e "\e[01;31m$error\e[0m";
+    state=0
+fi
+echo "output: $out_compressed_file_size, real: $compressed_file_size"
+#END_OF_COMPRESSING
+
+#DECOMPRESSING
+cmd_uncompress="../huffman -u -o $uncompressed -f $compressed"
+
+echo -e "\e[01;34m-----DECOMPRESSING-----\e[0m";
+output_uncompressed="$($cmd_uncompress)"
+echo -e "--output--";
+echo "$output_uncompressed"
+
+i=0
+while read -r line; do
+    out_uncompressed[$i]=$line
+    ((i++))
+done <<< "$output_uncompressed"
+
+compressed_file_size="$(echo "$(wc -c $compressed | awk '{print $1}')")"
+out_compressed_file_size=$((${out_uncompressed[0]}+${out_compressed[2]}))
+if [ "$out_compressed_file_size" -eq "$compressed_file_size" ]
+then 
+   status="OK statistic output: size of compressed file is real"
+   echo -e "\e[01;36m$status\e[0m";
+else 
+    error="ERROR statistic output: size of compressed file is not real"
+    echo -e "\e[01;31m$error\e[0m";
+    state=0
+fi
+echo "output: $out_compressed_file_size, real: $compressed_file_size"
+
+uncompressed_file_size="$(echo "$(wc -c $uncompressed | awk '{print $1}')")"
+if [ "${out_uncompressed[1]}" -eq "$uncompressed_file_size" ]
+then 
+   status="OK statistic output: size of uncompressed file is real"
+   echo -e "\e[01;36m$status\e[0m";
+else 
+    error="ERROR statistic output: size of uncompressed file is not real"
+    echo -e "\e[01;31m$error\e[0m";
+    state=0
+fi
+echo "output: ${out_uncompressed[1]}, real: $uncompressed_file_size"
+#END_OF_DECOMPRESSING
+
+
+#CHECK_EQUALITY
+if !(diff $filename $uncompressed)
+then
+    error="ERROR: $uncompressed uncompressed differs from $filename"
+    echo -e "\e[01;31m--------------------\e[0m";
+    echo -e "\e[01;31m$error\e[0m";
+    state=0
+else
+   status="OK: files do not differ"
+   echo -e "\e[01;33m-----------------------\e[0m";
+   echo -e "\e[01;33m$status\e[0m";
+fi
+
+rm $uncompressed
+rm $compressed
+
+if [ "$state" -eq "1" ]
+then
+    msg_result="----------------------- OK -----------------------"
+    echo -e "\e[01;32m$msg_result\e[0m";
+    exit 0;
+else
+    msg_result="----------------------- FAILED -----------------------"
+    echo -e "\e[01;31m$msg_result\e[0m";
+    exit 1;
+fi
+#END_OF_CHECK_EQUALITY

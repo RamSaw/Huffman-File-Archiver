@@ -1,0 +1,5 @@
+"make" creates "huffman" executable in root of folder, calls "make" from "Makefile_huffman".
+"make test" creates "test" in "./test/" and calls at first "cmake CMakeLists.txt", then "make" from "Makefile".
+"make clean" deletes "./bin ./huffman ./test/test" and all files created by cmake.
+For compiling "./test/test" you need to install "gtest".
+
